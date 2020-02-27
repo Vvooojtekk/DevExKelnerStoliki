@@ -1,0 +1,139 @@
+@using KelnerStoliki.Models
+
+
+
+@{
+    ViewBag.Title = "Rachunek";
+    ViewBag.id = 0;
+
+    try
+    {
+        ViewBag.id = int.Parse(ViewContext.RouteData.Values["id"].ToString()) - 1;
+    }
+    catch (Exception)
+    {
+
+    }
+
+    string controller = "DataGridEmployees" + (ViewBag.id + 1);
+
+}
+<div class="row dx-theme-material-typography">
+    <div id="menuContainer" class="col-2">
+        @(Html.DevExtreme().List()
+    .ID("navList")
+    .OnInitialized("list_onInitialized")
+    .Items(items =>
+    {
+        int i = 0;
+        foreach (var stoliki in ViewBag.Stoliki)
+        {
+            items.Add().Text(stoliki.Nazwa).Icon("coffee").Option("path", @Url.Action("Index/" + ((i + 1).ToString())));
+            i++;
+        }
+    })
+    .FocusStateEnabled(true)
+    .SelectionMode(ListSelectionMode.Single)
+    .OnSelectionChanged("list_onSelectionChanged")
+    .Width("100px")
+
+    )
+
+    </div>
+    
+    <div class="col-8 dx-theme-material-typography">
+        <h1>Rachunek</h1>
+        <div id="info" class="container mt-4">
+            <table class="container table m-auto" style="font-size:12px">
+                <thead>
+                    <tr class="row">
+                        <th scope="col" class="dx-datagrid-headers dx-datagrid-table dx-row col-3" style="font-size:10px">Nazwa</th>
+                        <th scope="col" class="dx-datagrid-headers dx-datagrid-table dx-row col-3" style="font-size:10px">Cena za sztukê</th>
+                        <th scope="col" class="dx-datagrid-headers dx-datagrid-table dx-row col-3" style="font-size:10px">Iloœæ</th>
+                        <th scope="col" class="dx-datagrid-headers dx-datagrid-table dx-row col-3" style="font-size:10px">Koszt</th>
+                    </tr>
+                </thead>
+                <tbody>
+                </tbody>
+            </table>
+            <h3 class="suma mt-2"></h3>
+        </div>
+    </div>
+</div>
+
+
+
+<script type="text/javascript">
+
+
+    const numberFormatter = new Intl.NumberFormat('pl-PL', {
+        style: 'currency',
+        currency: 'PLN',
+    });
+
+
+    
+    
+    function list_onSelectionChanged(e) {
+        document.location.pathname = e.addedItems[0].path;
+        disposeInfo();
+    }
+
+
+    function list_onInitialized(e) {
+        var t = "@Url.Action()";
+        e.component.option("selectedItemKeys", ["@Url.Action()"]);
+        var listInstance = $("#navList").dxList("instance");
+        listInstance.selectItem(@ViewBag.id);
+    }
+
+
+    var infoData = JSON.parse(localStorage.gridData);
+
+    window.onload = function () {
+    var sum=0;
+    var i;
+        for (i = 0; i < infoData.length; i++) {
+            var tableRef = document.getElementById('info').getElementsByTagName('tbody')[0];
+            var newRow = tableRef.insertRow(tableRef.rows.length);
+            newRow.className = "row";
+
+
+            var newCell1 = newRow.insertCell(0);
+            newCell1.className = "col-3 text-center";
+
+            var newCell2 = newRow.insertCell(1);
+            newCell2.className = "col-3 text-center";
+
+            var newCell3 = newRow.insertCell(2);
+            newCell3.className = "col-3 text-center";
+
+            var newCell4 = newRow.insertCell(3);
+            newCell4.className = "col-3 text-center";
+
+         
+            var newText = document.createTextNode(infoData[i].Danie);
+            newCell1.appendChild(newText);
+            
+            var cenaSzt = numberFormatter.format(infoData[i].Cena);
+            var newText2 = document.createTextNode(cenaSzt);
+            newCell2.appendChild(newText2);
+
+            var newText3 = document.createTextNode(infoData[i].Ilosc);
+            newCell3.appendChild(newText3);
+
+            var cenaIlosc = infoData[i].Cena * infoData[i].Ilosc;
+            cenaIlosc = numberFormatter.format(cenaIlosc);
+            var newText4 = document.createTextNode(cenaIlosc);
+            newCell4.appendChild(newText4);
+
+            sum += infoData[i].Cena * infoData[i].Ilosc;
+        }
+        sum = numberFormatter.format(sum);
+
+                $(".suma").text("Suma: " + sum);
+    }
+
+
+
+</script>

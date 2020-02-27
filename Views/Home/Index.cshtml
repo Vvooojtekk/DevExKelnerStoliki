@@ -1,0 +1,271 @@
+@using KelnerStoliki.Models
+
+
+
+@{
+    ViewBag.Title = "Index";
+    ViewBag.id = 0;
+
+    try
+    {
+        ViewBag.id = int.Parse(ViewContext.RouteData.Values["id"].ToString()) - 1;
+    }
+    catch (Exception)
+    {
+
+    }
+
+    string controller = "DataGridEmployees" + (ViewBag.id + 1);
+
+}
+<div class="row dx-theme-material-typography">
+    <div id="menuContainer" class="col-2">
+        @(Html.DevExtreme().List()
+        .ID("navList")
+        .OnInitialized("list_onInitialized")
+        .Items(items =>
+        {
+            int i = 0;
+            foreach (var stoliki in ViewBag.Stoliki)
+            {
+                items.Add().Text(stoliki.Nazwa).Icon("coffee").Option("path", @Url.Action("Index/" + ((i + 1).ToString())));
+                i++;
+            }
+        })
+        .FocusStateEnabled(true)
+        .SelectionMode(ListSelectionMode.Single)
+        .OnSelectionChanged("list_onSelectionChanged")
+        .Width("100px")
+  
+        )
+
+    </div>
+    
+    <div class="col-8">
+
+        <div class="container">
+            <div class="row dx-theme-material-typography">
+                @{ViewBag.st = ViewBag.id + 1;}
+                <div class="col col-lg-4 col-sm-12 dx-theme-material-typography"><h3 class="suma" style="color: rgba(0,0,0,.5)"></h3></div>
+                <div class="col m-auto col-lg-4 col-sm-12 dx-theme-material-typography">
+                    <div class="text-center">
+                        
+                    </div>
+                </div>
+            </div>
+
+            @(Html.DevExtreme().DataGrid<KelnerStoliki.Models.DataGrid.PrzedmiotZamowienia>
+    ()
+    .ID("gridContainer")
+    .OnToolbarPreparing("toolbarPreparing")
+
+    .StateStoring(s => s
+    .Enabled(true)
+    .Type(StateStoringType.SessionStorage)
+    .StorageKey("ID")
+    )
+    .ShowBorders(true)
+    .Height(300)
+    .ShowRowLines(true)
+    .Paging(paging => paging.Enabled(false))
+    .Editing(editing =>
+    {
+        editing.Mode(GridEditMode.Popup);
+        editing.AllowAdding(true);
+        editing.AllowDeleting(true);
+        editing.AllowUpdating(true);
+    })
+    .Columns(columns =>
+    {
+        columns.AddFor(m => m.DanieID)
+        .Lookup(lookup => lookup
+        .DataSource(d => d.WebApi().Controller("DaniaLookup").Key("ID"))
+        .DisplayExpr("Name")
+        .ValueExpr("ID")
+        );
+
+        columns.AddFor(m => m.Ilosc).Caption("Iloœæ");
+
+
+    })
+    .DataSource(d => d.WebApi()
+    .Controller(controller)
+    .LoadAction("Get")
+    .InsertAction("Post")
+    .UpdateAction(true)
+    .DeleteAction(true)
+    .Key("ID")
+    .OnLoaded("summary")
+    )
+
+    .Selection(s => s.Mode(SelectionMode.Single)).AccessKey("ID")
+    .HoverStateEnabled(true)
+    .FocusStateEnabled(true)
+    .KeyExpr("ID")
+    .Editing(e => e
+    .RefreshMode(GridEditRefreshMode.Full)
+    .AllowAdding(true)
+    .AllowUpdating(true)
+    .AllowDeleting(true)
+    .Mode(GridEditMode.Popup)
+    .UseIcons(true)
+
+
+    .Popup(p => p
+    .Title("Danie")
+    .ShowCloseButton(true)
+    .ShowTitle(true)
+    .Width(300)
+    .Height(230)
+    .Position(pos => pos
+    .My(HorizontalAlignment.Center, VerticalAlignment.Top)
+    .At(HorizontalAlignment.Center, VerticalAlignment.Top)
+    .Of(new JS("window")))
+    )
+    )
+    .OnSelectionChanged("selection_changed")
+    .OnRowInserted("disposeInfo")
+    .OnRowUpdated("disposeInfo")
+    .OnRowRemoved("disposeInfo")
+
+
+
+            )
+        </div>
+
+        <div id="info" class="container mt-4" style="display:none">
+            <table class="container table m-auto" style="font-size:12px">
+                <thead>
+                    <tr class="row">
+                        <th scope="col" class="dx-datagrid-headers dx-datagrid-table dx-row col-3" style="font-size:10px">Nazwa</th>
+                        <th scope="col" class="dx-datagrid-headers dx-datagrid-table dx-row col-3" style="font-size:10px">Cena za sztukê</th>
+                        <th scope="col" class="dx-datagrid-headers dx-datagrid-table dx-row col-3" style="font-size:10px">Iloœæ</th>
+                        <th scope="col" class="dx-datagrid-headers dx-datagrid-table dx-row col-3" style="font-size:10px">Koszt</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr class="row">
+                        <td class="col-3 text-center"><p class="danieNazwa"></p></td>
+                        <td class="col-3 text-center"><p class="danieCena"></p></td>
+                        <td class="col-3 text-center"><p class="ilosc"></p></td>
+                        <td class="col-3 text-center"><p class="iloscCena"></p></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+
+        </div>
+        </div>
+
+
+
+<script type="text/javascript">
+    var toolbar;
+    function toolbarPreparing(e) {
+        toolbar = e;
+        e.id = "toolbarDataGrid";
+        e.toolbarOptions.items[0].showText = "always";
+        e.toolbarOptions.items[0].options.text = "DODAJ";
+        e.toolbarOptions.items[0].options.icon = "plus";
+        e.toolbarOptions.items[0].options.hint = "Dodaj nowe danie";
+        
+        e.toolbarOptions.items.unshift({
+
+            location: "after",
+            widget: "dxButton",
+            options: {
+                icon: "todo",
+                onClick: function () {
+                    rachunekAction();
+                },
+                text: "RACHUNEK",
+                showText: "always",
+                id: "btnRachunek",
+                disabled: false
+
+            }
+        })
+        
+        
+        }
+
+    const numberFormatter = new Intl.NumberFormat('pl-PL', {
+        style: 'currency',
+        currency: 'PLN',
+    });
+
+    function selection_changed(selectedItems) {
+
+        var data = selectedItems.selectedRowsData[0];
+        if (data) {
+            document.getElementById("info").style.display = 'block';
+            var cena = data.Cena;
+            cena = numberFormatter.format(cena);
+
+            $(".danieCena").text(cena);
+
+            var cenaIlosc = data.Cena * data.Ilosc;
+            cenaIlosc = numberFormatter.format(cenaIlosc);
+            $(".iloscCena").text(cenaIlosc);
+
+            $(".ilosc").text(data.Ilosc);
+            $(".danieNazwa").text(data.Danie);
+
+            summary();
+
+
+        }
+    }
+    var sum = 0;
+    function summary() {
+        sum = 0;
+        
+        var grid = $("#gridContainer").dxDataGrid("instance");
+            grid.getDataSource().store().load().done((allData) => {
+                allData.forEach(function(row) {
+                    sum = sum + (row.Cena * row.Ilosc);
+                });
+                
+                var summary = numberFormatter.format(sum);
+
+                $(".suma").text("Suma: " + summary);
+            });
+
+           
+    }
+    function list_onSelectionChanged(e) {
+        document.location.pathname = e.addedItems[0].path;
+        disposeInfo();
+    }
+
+    function disposeInfo() {
+        document.getElementById("info").style.display = 'none';
+        var grid = $("#gridContainer").dxDataGrid("instance");
+        grid.deselectAll();
+        grid.clearSelection();
+        summary();
+        grid.refresh();
+    }
+
+    function list_onInitialized(e) {
+        var t = "@Url.Action()";
+        e.component.option("selectedItemKeys", ["@Url.Action()"]);
+        var listInstance = $("#navList").dxList("instance");
+        listInstance.selectItem(@ViewBag.id);
+    }
+
+    function rachunekAction() {
+        var gridData = [];
+        var grid = $("#gridContainer").dxDataGrid("instance");
+        grid.getDataSource().store().load().done((allData) => {
+            allData.forEach(function (row) {
+                gridData.push(row)
+            });
+
+            localStorage.gridData = JSON.stringify(gridData);
+
+            window.location = "@Url.Action("Rachunek","Home", new { id = ViewBag.id+1 })";
+        });
+    }
+</script>

@@ -1,0 +1,48 @@
+﻿<!DOCTYPE html>
+
+<html>
+<head>
+
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="description" content="">
+    <meta name="author" content="">
+
+    <title>Kelner</title>
+    <link href="~/favicon.ico" rel="shortcut icon" type="image/x-icon" />
+
+
+    @* Uncomment to use the HtmlEditor control *@
+    @* <script src="https://cdnjs.cloudflare.com/ajax/libs/quill/1.3.6/quill.min.js"></script> *@
+
+    @Styles.Render("~/Content/bundle")
+    @Styles.Render("~/Content/DevExtremeBundle")
+    @Scripts.Render("~/Scripts/bundle")
+    @Scripts.Render("~/Scripts/DevExtremeBundle")
+
+    @* reference the Intl module *@
+    <script src="https://unpkg.com/devextreme-intl/dist/devextreme-intl.min.js"></script>
+    @* reference dictionaries *@
+    <script src="~/Scripts/localization/dx.messages.pl.js"></script>
+
+</head>
+
+<body style="padding-top: 5rem;">
+
+    <nav class="navbar navbar-dark fixed-top navbar-expand-md" style="background-color:#3e52b5">
+        <a class="navbar-brand" href="/">Kelner</a>
+
+
+    </nav>
+
+    <main role="main" class="container-fluid">
+        @RenderBody()
+    </main>
+
+    <script>
+        DevExpress.localization.locale("pl");
+    </script>
+</body>
+
+</html>
